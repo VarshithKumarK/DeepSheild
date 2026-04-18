@@ -1,0 +1,24 @@
+[project]
+name = "aiml"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastapi>=0.135.3",
+    "grad-cam>=1.5.5",
+    "matplotlib>=3.10.8",
+    "moviepy>=2.2.1",
+    "mtcnn>=1.0.0",
+    "numpy>=2.4.4",
+    "onnx>=1.21.0",
+    "onnxruntime>=1.24.4",
+    "opencv-python>=4.13.0.92",
+    "pillow>=11.3.0",
+    "python-multipart>=0.0.26",
+    "scikit-learn>=1.8.0",
+    "tensorflow>=2.21.0",
+    "torch>=2.11.0",
+    "torchvision>=0.26.0",
+    "uvicorn>=0.44.0",
+]

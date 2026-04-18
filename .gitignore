@@ -2,5 +2,8 @@ frontend/node_modules
 backend/node_modules
 backend/.env
 frontend/.env
-aiml(cnn)/.env
-aiml(cnn)/deepsheild
+aiml/.env
+aiml/data/dataset
+aiml/weights
+aiml/.venv
+aiml/uv.lock

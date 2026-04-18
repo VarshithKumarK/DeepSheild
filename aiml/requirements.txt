@@ -1,0 +1,16 @@
+fastapi
+uvicorn
+torch
+torchvision
+opencv-python
+pillow
+numpy
+mtcnn
+scikit-learn
+matplotlib
+grad-cam
+moviepy
+onnx
+onnxruntime
+tensorflow
+python-multipart
