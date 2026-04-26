@@ -2,7 +2,7 @@ import torch
 
 
 class Config:
-    DATA_DIR = "data/dataset"
+    DATA_DIR = "data/dataset_cropped"   # pre-cropped by precrop_dataset.py
     BATCH_SIZE = 32
     LR = 5e-5
     EPOCHS = 10

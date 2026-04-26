@@ -7,3 +7,6 @@ aiml/data/dataset
 aiml/weights
 aiml/.venv
 aiml/uv.lock
+aiml/data/dataset_cropped
+aiml/raw_videos
+aiml/outputs

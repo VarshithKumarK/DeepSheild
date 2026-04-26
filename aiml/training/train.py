@@ -14,7 +14,9 @@ def train():
 
     model = get_model().to(Config.DEVICE)
 
-    criterion = nn.BCEWithLogitsLoss()
+    # Slight class imbalance (fake: 960, real: 1081)
+    pos_weight = torch.tensor([960 / 1081]).to(Config.DEVICE)
+    criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
     optimizer = optim.Adam(model.parameters(), lr=Config.LR)
     best_acc = 0
     for epoch in range(Config.EPOCHS):
