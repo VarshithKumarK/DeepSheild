@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import numpy as np
 import cv2
 from app.model.model import load_model
@@ -55,13 +55,12 @@ async def predict_api(file: UploadFile = File(...)):
         "label": label,
         "confidence": float(prob),
         "signals": signals,
-        "heatmap_info": heatmap_info,
-        "explanation": explanation,
-        "heatmap": heatmap_base64  # preserve the image for frontend if needed
+        "heatmap": heatmap_base64,
+        "explanation": explanation
     }
 
 @app.post("/predict-video")
-async def predict_video(file: UploadFile = File(...), explain: bool = False):
+async def predict_video(file: UploadFile = File(...), explain: bool = False, include_frames: bool = False, include_heatmap: bool = False):
     with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as temp_file:
         shutil.copyfileobj(file.file, temp_file)
         temp_path = temp_file.name
@@ -76,10 +75,10 @@ async def predict_video(file: UploadFile = File(...), explain: bool = False):
                 content={"status": "error", "message": err_msg}
             )
 
-        result = process_video(temp_path, explain=explain)
+        result = process_video(temp_path, explain=explain, include_frames=include_frames, include_heatmap=include_heatmap)
         return result
 
     finally:
         # Clean up file after processing
         if os.path.exists(temp_path):
-            os.remove(temp_path)
+            os.remove(temp_path)

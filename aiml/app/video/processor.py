@@ -41,7 +41,7 @@ def generate_timeline(results, fps):
 
     return timeline
 
-def process_video(video_path, explain=False):
+def process_video(video_path, explain=False, include_frames=False, include_heatmap=False):
     frames = extract_frames(video_path)
 
     # Get video FPS to calculate timeline timestamps accurately
@@ -77,24 +77,38 @@ def process_video(video_path, explain=False):
                 cv2.imwrite(os.path.join(debug_dir, f"debug_face_{idx}.jpg"), face)
                 saved_debug_frames += 1
 
-            # 4. Optional optimization for explainability
-            if explain and idx % 10 != 0:
-                continue
+            # 4. We always predict label and probability for every extracted frame.
+            # We only generate heatmap and explanation on sampled frames (idx % 10 == 0) to save time,
+            # and ONLY if the user actually requested them (explain=True or include_heatmap=True).
+            heatmap_base64 = None
+            heatmap_info_out = None
+            signals_out = None
+            explanation_out = None
 
-            # 5. Progress into prediction
-            if explain:
-                label, prob, heatmap_info, signals, explanation = predict(model, face, explain=True)
-                results.append({
-                    "frame": idx,
-                    "label": label,
-                    "confidence": prob,
-                    "signals": signals,
-                    "heatmap_info": heatmap_info,
-                    "explanation": explanation
-                })
+            if (explain or include_heatmap) and idx % 10 == 0:
+                label, prob, heatmap_info_out, signals_out, explanation_out, heatmap = predict(model, face, explain=True)
+                
+                if include_heatmap and heatmap is not None:
+                    import base64
+                    heatmap_bgr = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+                    _, buffer = cv2.imencode(".jpg", heatmap_bgr)
+                    heatmap_base64 = base64.b64encode(buffer).decode("utf-8")
+                
+                # If explain was False, clear out explanation
+                if not explain:
+                    explanation_out = None
             else:
                 label, prob = predict(model, face, explain=False)
-                results.append({"frame": idx, "label": label, "confidence": prob})
+
+            results.append({
+                "frame": idx,
+                "label": label,
+                "confidence": prob,
+                "signals": signals_out,
+                "heatmap_info": heatmap_info_out,
+                "explanation": explanation_out,
+                "heatmap_base64": heatmap_base64
+            })
 
             if label == "fake":
                 fake_count += 1
@@ -115,15 +129,28 @@ def process_video(video_path, explain=False):
         final_label = "fake" if fake_count > total_processed * 0.5 else "real"
         avg_confidence = sum(r["confidence"] for r in results) / total_processed
 
-    # Generate timeline
-    timeline = generate_timeline(results, fps=effective_fps)
+    video_summary = {
+        "label": final_label,
+        "confidence": round(avg_confidence, 4),
+        "total_frames": len(frames),
+        "fake_frames": fake_count,
+        "real_frames": total_processed - fake_count
+    }
+
+    frame_results = []
+    if include_frames or include_heatmap:
+        for r in results:
+            frame_results.append({
+                "frame_id": r["frame"],
+                "label": r["label"],
+                "confidence": round(r["confidence"], 4),
+                "explanation": r.get("explanation") if include_frames else None,
+                "heatmap": r.get("heatmap_base64") if include_heatmap else None
+            })
 
     return {
-        "final_prediction": final_label,
-        "timeline": timeline,
-        "frames": results,
-        "key_frames": key_frames,
-        "avg_confidence": round(avg_confidence, 4),
-        "processed_frames": total_processed,
-        "total_skipped": len(frames) - total_processed
+        "label": final_label,
+        "confidence": round(avg_confidence, 4),
+        "summary": video_summary,
+        "frames": frame_results
     }

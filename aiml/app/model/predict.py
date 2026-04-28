@@ -73,6 +73,6 @@ def predict(model, face, run_gradcam=False, explain=False):
         heatmap_info = analyze_heatmap(heatmap)
         explanation = generate_dynamic_explanation(label, float(confidence), signals, heatmap_info)
         
-        return label, confidence, heatmap_info, signals, explanation
+        return label, confidence, heatmap_info, signals, explanation, heatmap
 
     return label, confidence, heatmap, signals
