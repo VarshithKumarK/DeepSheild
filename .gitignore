@@ -10,3 +10,5 @@ aiml/uv.lock
 aiml/data/dataset_cropped
 aiml/raw_videos
 aiml/outputs
+aiml/final_overlay.jpg
+aiml/image_report.pdf

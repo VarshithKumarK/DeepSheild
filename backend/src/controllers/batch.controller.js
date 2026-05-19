@@ -1,4 +1,5 @@
 import { processFile } from "../services/batch.service.js";
+import ScanHistory from "../models/ScanHistory.js";
 
 export const batchPredict = async (req, res) => {
   try {
@@ -11,6 +12,18 @@ export const batchPredict = async (req, res) => {
     for (const file of files) {
       const result = await processFile(file, includeExplanation, includeHeatmap);
       console.log("Processed Result:", result);
+
+      if (req.user && req.user._id) {
+        await ScanHistory.create({
+          userId: req.user._id,
+          fileName: result.fileName,
+          fileType: result.fileType,
+          label: result.label,
+          confidence: result.confidence,
+          summary: result.summary || {},
+        });
+      }
+
       results.push(result);
     }
 
