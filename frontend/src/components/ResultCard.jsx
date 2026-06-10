@@ -33,12 +33,12 @@ export default function ResultCard({ result, options }) {
 
   return (
     <div className="glass-panel rounded-2xl overflow-hidden border-white/5 flex flex-col">
-      <div className="p-5 border-b border-white/5 flex items-start justify-between bg-white/[0.01]">
+      <div className="p-5 border-b border-white/5 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 bg-white/[0.01]">
         <div>
-          <h3 className="font-semibold text-lg text-white mb-1 truncate">{result.fileName}</h3>
+          <h3 className="font-semibold text-lg text-white mb-1 truncate max-w-[250px] sm:max-w-[400px]">{result.fileName}</h3>
           <p className="text-sm text-gray-400">{isVideo ? 'Video Analysis' : 'Image Analysis'}</p>
         </div>
-        <div className={`px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
+        <div className={`self-start sm:self-auto px-3 py-1 rounded-full text-xs font-bold border flex items-center gap-1.5 ${
           isFake ? 'bg-red-500/10 text-red-400 border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
         }`}>
           {isFake ? <FiAlertTriangle className="w-3.5 h-3.5" /> : <FiCheckCircle className="w-3.5 h-3.5" />}
@@ -157,13 +157,13 @@ export default function ResultCard({ result, options }) {
         )}
       </div>
 
-      <div className="p-4 border-t border-white/5 bg-white/[0.01] flex justify-between items-center">
+      <div className="p-4 border-t border-white/5 bg-white/[0.01] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="text-sm text-gray-500">
            {isVideo ? 'Video analysis complete' : 'Image analysis complete'}
         </div>
         <button 
           onClick={handleDownloadPDF}
-          className="flex items-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 rounded-lg text-sm font-medium text-indigo-300 hover:text-white transition-colors"
+          className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600/20 hover:bg-indigo-600/40 border border-indigo-500/30 rounded-lg text-sm font-medium text-indigo-300 hover:text-white transition-colors"
         >
           <FiDownload className="w-4 h-4" />
           Download PDF

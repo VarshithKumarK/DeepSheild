@@ -2,10 +2,8 @@ import os
 import cv2
 from app.video.extractor import extract_frames
 from app.model.predict import predict
-from app.model.model import load_model
+from app.model.model import get_model
 from app.model.preprocess import extract_face
-
-model = load_model()
 
 
 def generate_timeline(results, fps):
@@ -42,6 +40,7 @@ def generate_timeline(results, fps):
     return timeline
 
 def process_video(video_path, explain=False, include_frames=False, include_heatmap=False):
+    model = get_model("efficientnet")
     frames = extract_frames(video_path)
 
     # Get video FPS to calculate timeline timestamps accurately

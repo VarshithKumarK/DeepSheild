@@ -10,7 +10,20 @@ def generate_heatmap(model, input_tensor, original_image):
     input_tensor = input_tensor.float()
     model = model.float()
 
-    target_layer = model.features[-1]
+    if hasattr(model, "features"):
+        target_layer = model.features[-1]
+    elif hasattr(model, "proj"):
+        target_layer = model.proj
+    else:
+        # Fallback to the last Conv2d layer in the model
+        target_layer = None
+        for module in reversed(list(model.modules())):
+            if isinstance(module, torch.nn.Conv2d):
+                target_layer = module
+                break
+                
+    if target_layer is None:
+        raise ValueError("Could not find a valid convolutional layer for Grad-CAM.")
 
     cam = GradCAM(model=model, target_layers=[target_layer])
 

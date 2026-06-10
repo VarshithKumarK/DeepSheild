@@ -3,6 +3,8 @@ import MainLayout from './layouts/MainLayout';
 import Home from './pages/Home';
 import UploadDashboard from './pages/UploadDashboard';
 import Profile from './pages/Profile';
+import LiveVerification from './pages/LiveVerification';
+import ScreenMonitor from './pages/ScreenMonitor';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import { AuthProvider } from './context/AuthContext';
@@ -23,6 +25,8 @@ function App() {
               <Route element={<DashboardLayout />}>
                 <Route path="dashboard" element={<UploadDashboard />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="live-verification" element={<LiveVerification />} />
+                <Route path="screen-monitor" element={<ScreenMonitor />} />
               </Route>
             </Route>
           </Route>

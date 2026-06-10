@@ -18,3 +18,4 @@ langgraph
 groq
 python-dotenv
 reportlab
+timm

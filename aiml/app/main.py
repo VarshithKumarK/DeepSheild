@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File
 from fastapi.responses import JSONResponse, FileResponse
 import numpy as np
 import cv2
-from app.model.model import load_model
+from app.model.model import get_model
 from app.model.preprocess import extract_face
 from app.model.predict import predict
 import shutil
@@ -13,9 +13,18 @@ from app.video.validator import validate_video
 from app.utils.heatmap_analysis import analyze_heatmap
 from app.agent.explainer import generate_dynamic_explanation
 
-app = FastAPI()
+from app.routes.live_routes import router as live_router
 
-model = load_model()
+app = FastAPI()
+app.include_router(live_router)
+
+# Pre-warm model caches at startup
+print("[AI Startup] Pre-warming model cache...")
+get_model("efficientnet")
+try:
+    get_model("xception_swin")
+except Exception as e:
+    print(f"[AI Startup] Non-fatal error pre-warming Xception-Swin model: {e}")
 
 
 @app.get("/")
@@ -35,6 +44,7 @@ async def predict_api(file: UploadFile = File(...)):
     if face is None:
         return {"error": "No face detected"}
 
+    model = get_model("efficientnet")
     label, prob, heatmap, signals = predict(model, face, run_gradcam=True)
 
     heatmap_info = {}
