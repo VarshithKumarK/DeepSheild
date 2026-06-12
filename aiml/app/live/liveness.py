@@ -124,20 +124,49 @@ def evaluate_liveness(
         [landmarks[RIGHT_BOUNDARY].x, landmarks[RIGHT_BOUNDARY].y]
     ]
     session_state["landmark_history"].append(curr_landmarks)
-    if len(session_state["landmark_history"]) > 5:
+    if len(session_state["landmark_history"]) > 8:
         session_state["landmark_history"].pop(0)
         
-    # Static image spoof detection (variance of landmarks)
+    # Track rigid distance history to detect paper/screen spoofs
+    p_left_eye = np.array([(landmarks[33].x + landmarks[133].x)/2.0, (landmarks[33].y + landmarks[133].y)/2.0])
+    p_right_eye = np.array([(landmarks[362].x + landmarks[263].x)/2.0, (landmarks[362].y + landmarks[263].y)/2.0])
+    p_nose = np.array([landmarks[NOSE_TIP].x, landmarks[NOSE_TIP].y])
+    p_left = np.array([landmarks[LEFT_BOUNDARY].x, landmarks[LEFT_BOUNDARY].y])
+    p_right = np.array([landmarks[RIGHT_BOUNDARY].x, landmarks[RIGHT_BOUNDARY].y])
+    p_top = np.array([landmarks[FOREHEAD_TOP].x, landmarks[FOREHEAD_TOP].y])
+    p_bottom = np.array([landmarks[CHIN_BOTTOM].x, landmarks[CHIN_BOTTOM].y])
+    
+    curr_distances = [
+        float(np.linalg.norm(p_left_eye - p_right_eye)),
+        float(np.linalg.norm(p_nose - p_left)),
+        float(np.linalg.norm(p_nose - p_right)),
+        float(np.linalg.norm(p_top - p_bottom)),
+        float(np.linalg.norm(p_left_eye - p_nose))
+    ]
+    
+    if "distance_history" not in session_state:
+        session_state["distance_history"] = []
+    session_state["distance_history"].append(curr_distances)
+    if len(session_state["distance_history"]) > 8:
+        session_state["distance_history"].pop(0)
+
+    # Static image spoof detection (both absolute landmark variance and relative distance variance)
     is_static = False
     should_check_static = (not is_screen_share) or is_meeting_app
     
-    if should_check_static and len(session_state["landmark_history"]) >= 3:
+    if should_check_static and len(session_state["landmark_history"]) >= 5:
+        # 1. Absolute coordinate standard deviation (detects frozen feeds)
         history_arr = np.array(session_state["landmark_history"]) # shape (N, 3, 2)
-        # Compute standard deviation over the N frames for each coordinate
         stds = np.std(history_arr, axis=0) # shape (3, 2)
-        mean_std = np.mean(stds)
-        # If mean std is extremely low, the user is not moving at all (likely static photo)
-        if mean_std < 0.0005:  # threshold for micro-movements
+        mean_coord_std = np.mean(stds)
+        
+        # 2. Rigid relative distance standard deviation (detects held photos/screens)
+        dist_arr = np.array(session_state["distance_history"]) # shape (N, 5)
+        dist_stds = np.std(dist_arr, axis=0) # shape (5,)
+        mean_dist_std = np.mean(dist_stds)
+        
+        # Trigger spoof if feed is frozen or if it behaves as a rigid 2D plane
+        if mean_coord_std < 0.0002 or mean_dist_std < 0.00025:
             is_static = True
 
     # 3. Action-based verification logic

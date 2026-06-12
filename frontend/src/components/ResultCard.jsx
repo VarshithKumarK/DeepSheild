@@ -3,6 +3,60 @@ import { FiDownload, FiChevronDown, FiChevronUp, FiAlertTriangle, FiCheckCircle 
 import { generateImagePDF, generateVideoPDF } from '../utils/pdfGenerator';
 import { motion, AnimatePresence } from 'framer-motion';
 
+// Formatter to render Markdown-style text cleanly without raw * and ** characters
+const renderExplanation = (text, isSmall = false) => {
+  if (!text) return null;
+
+  const lines = text.split("\n");
+  const textColor = isSmall ? "text-gray-400" : "text-gray-300";
+  const textSize = isSmall ? "text-xs" : "text-sm";
+  const bulletSize = isSmall ? "w-1 h-1 mt-1.5" : "w-1.5 h-1.5 mt-1.5";
+
+  return (
+    <div className="space-y-1.5">
+      {lines.map((line, idx) => {
+        let cleanLine = line.trim();
+        if (cleanLine === "") return <div key={idx} className="h-1.5" />;
+
+        // Check for bullet list item
+        const isBullet = cleanLine.startsWith("* ") || cleanLine.startsWith("- ") || cleanLine.startsWith("• ");
+        if (isBullet) {
+          cleanLine = cleanLine.replace(/^[\*\-\•]\s*/, "");
+        }
+
+        // Handle markdown bold text (**bold**)
+        const parts = cleanLine.split("**");
+        const formattedParts = parts.map((part, pIdx) => {
+          const cleanPart = part.replace(/\*/g, "");
+          if (pIdx % 2 === 1) {
+            return (
+              <strong key={pIdx} className="font-bold text-white">
+                {cleanPart}
+              </strong>
+            );
+          }
+          return cleanPart;
+        });
+
+        if (isBullet) {
+          return (
+            <div key={idx} className={`flex items-start gap-2 ${textColor} pl-2`}>
+              <span className={`text-indigo-400 flex-shrink-0 rounded-full bg-indigo-500 ${bulletSize}`} />
+              <span className={`flex-1 leading-relaxed ${textSize}`}>{formattedParts}</span>
+            </div>
+          );
+        }
+
+        return (
+          <p key={idx} className={`leading-relaxed ${textColor} ${textSize}`}>
+            {formattedParts}
+          </p>
+        );
+      })}
+    </div>
+  );
+};
+
 export default function ResultCard({ result, options }) {
   const [expanded, setExpanded] = useState(false);
   
@@ -102,9 +156,7 @@ export default function ResultCard({ result, options }) {
         {result.explanation && (
           <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-xl p-4 mb-4">
             <h4 className="text-xs font-bold text-indigo-400 mb-2 uppercase tracking-wider">AI Explanation</h4>
-            <p className="text-sm text-gray-300 leading-relaxed whitespace-pre-wrap">
-              {result.explanation}
-            </p>
+            {renderExplanation(result.explanation)}
           </div>
         )}
 
@@ -136,7 +188,9 @@ export default function ResultCard({ result, options }) {
                       </div>
                       
                       {frame.explanation && (
-                         <p className="text-xs text-gray-400 mb-3">{frame.explanation}</p>
+                         <div className="mb-3">
+                           {renderExplanation(frame.explanation, true)}
+                         </div>
                       )}
 
                       {frame.heatmap && (

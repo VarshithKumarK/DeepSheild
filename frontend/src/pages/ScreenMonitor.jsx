@@ -11,6 +11,8 @@ export default function ScreenMonitor() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [faceDetected, setFaceDetected] = useState(false);
   const [frameCount, setFrameCount] = useState(0);
+  const [detectedFaces, setDetectedFaces] = useState([]);
+  const [isMeetingSession, setIsMeetingSession] = useState(false);
   
   // Real-time scan log history state
   const [scanLogs, setScanLogs] = useState([]);
@@ -38,6 +40,7 @@ export default function ScreenMonitor() {
     setSessionId(uuid);
     setFaceDetected(false);
     setFrameCount(0);
+    setDetectedFaces([]);
     setScanLogs([]);
     setScores({
       trustScore: 0.5,
@@ -65,12 +68,14 @@ export default function ScreenMonitor() {
     }
     setSessionId(null);
     setFaceDetected(false);
+    setDetectedFaces([]);
   };
 
   // Frame processing from ScreenShareCard
   const handleCaptureFrame = async (base64Frame, isMeetingApp) => {
     if (lockRequest || !sessionId) return;
     
+    setIsMeetingSession(isMeetingApp);
     setLockRequest(true);
     setIsAnalyzing(true);
     setError(null);
@@ -84,6 +89,7 @@ export default function ScreenMonitor() {
       
       if (!res.face_detected) {
         setFaceDetected(false);
+        setDetectedFaces([]);
         setError(res.error || "No active presenter face detected in shared window.");
         
         // Log frame failure in history console
@@ -102,6 +108,7 @@ export default function ScreenMonitor() {
       }
 
       setFaceDetected(true);
+      setDetectedFaces(res.faces || []);
       
       setChecklist({
         isStaticSpoof: res.liveness.is_static_spoof,
@@ -133,6 +140,7 @@ export default function ScreenMonitor() {
 
     } catch (err) {
       console.error("Screen analysis error:", err);
+      setDetectedFaces([]);
       setError(err.response?.data?.error || "Connection failure with real-time AI engine.");
       
       const logEntry = {
@@ -194,6 +202,7 @@ export default function ScreenMonitor() {
             isActive={isActive}
             onCaptureFrame={handleCaptureFrame}
             faceDetected={faceDetected}
+            detectedFaces={detectedFaces}
           />
           
           {/* Dynamic real-time frame scanning log console */}
@@ -274,6 +283,61 @@ export default function ScreenMonitor() {
             riskIndicator={scores.riskIndicator}
             hideLiveness={true}
           />
+          
+          {/* Multi-Face Presenter Feed Scorecard */}
+          {isActive && detectedFaces.length > 0 && (
+            <div className="glass-panel p-5 rounded-2xl border border-white/10 flex flex-col gap-4">
+              <div className="flex justify-between items-center border-b border-white/10 pb-3">
+                <h3 className="font-bold text-base text-gray-300 flex items-center gap-2">
+                  <FiShield className="text-indigo-400" /> Active Screen Speakers ({detectedFaces.length})
+                </h3>
+              </div>
+              
+              <div className="flex flex-col gap-3">
+                {detectedFaces.map((face, index) => {
+                  const isSpoof = isMeetingSession && face.liveness.is_static_spoof;
+                  const isFake = face.deepfake.label.toLowerCase() === 'fake';
+                  const isThreat = isSpoof || isFake;
+                  return (
+                    <div 
+                      key={face.face_index} 
+                      className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all ${
+                        isThreat
+                          ? "border-red-500/20 bg-red-500/[0.02]"
+                          : "border-emerald-500/15 bg-emerald-500/[0.01]"
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-bold text-gray-300 uppercase tracking-wider">
+                          Speaker #{index + 1}
+                        </span>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold border ${
+                          isThreat
+                            ? "bg-red-500/10 text-red-400 border-red-500/20 animate-pulse"
+                            : "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
+                        }`}>
+                          {isSpoof 
+                            ? 'SPOOF DETECTED' 
+                            : (isFake ? 'DEEPFAKE' : 'AUTHENTIC')}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs font-mono mt-1">
+                        <div className="text-gray-500">
+                          Trust: <span className={`font-bold ${
+                            face.trust.trust_score >= 0.75 ? 'text-emerald-400' : (face.trust.trust_score >= 0.45 ? 'text-amber-400' : 'text-red-400')
+                          }`}>{Math.round(face.trust.trust_score * 100)}%</span>
+                        </div>
+                        <div className="text-gray-500">
+                          Authenticity: <span className="font-bold text-gray-300">{Math.round(face.deepfake.authenticity_score * 100)}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           
           {/* Custom Passive Biometric diagnostics console */}
           <div className="glass-panel p-5 rounded-2xl border border-white/10 flex flex-col gap-4">

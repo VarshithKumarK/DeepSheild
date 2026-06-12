@@ -4,7 +4,8 @@ import { FiMonitor, FiVideoOff } from "react-icons/fi";
 export default function ScreenShareCard({
   isActive,
   onCaptureFrame,
-  faceDetected
+  faceDetected,
+  detectedFaces = []
 }) {
   const videoRef = useRef(null);
   const [deviceError, setDeviceError] = useState(null);
@@ -115,14 +116,52 @@ export default function ScreenShareCard({
       </div>
 
       {isActive && !deviceError ? (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-white/15 bg-black/40">
+        <div className="relative w-full rounded-xl overflow-hidden border border-white/15 bg-black/40">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-contain bg-black"
+            className="w-full h-auto block bg-black"
           />
+
+          {/* Real-Time Bounding Box Overlays */}
+          {detectedFaces.map((face, index) => {
+            const isSpoof = isMeetingApp && face.liveness.is_static_spoof;
+            const isDeepfake = face.deepfake.label.toLowerCase() === 'fake';
+            const isThreat = isSpoof || isDeepfake;
+            
+            let statusLabel = 'REAL';
+            if (isSpoof) {
+              statusLabel = 'SPOOF';
+            } else if (isDeepfake) {
+              statusLabel = 'DEEPFAKE';
+            }
+
+            return (
+              <div
+                key={face.face_index}
+                className="absolute transition-all duration-300 pointer-events-none z-20"
+                style={{
+                  left: `${face.box.x * 100}%`,
+                  top: `${face.box.y * 100}%`,
+                  width: `${face.box.w * 100}%`,
+                  height: `${face.box.h * 100}%`,
+                  border: `2px solid ${isThreat ? '#ef4444' : '#10b981'}`,
+                  borderRadius: '12px',
+                  boxShadow: `0 0 12px ${isThreat ? 'rgba(239, 68, 68, 0.4)' : 'rgba(16, 185, 129, 0.4)'}`,
+                }}
+              >
+                <span 
+                  className={`absolute -top-6 left-0 px-2 py-0.5 text-[9px] font-black uppercase rounded shadow-md select-none ${
+                    isThreat ? 'bg-red-500 text-white' : 'bg-emerald-500 text-white'
+                  }`}
+                >
+                  Speaker #{index + 1} ({statusLabel})
+                </span>
+              </div>
+            );
+          })}
 
           {/* Active Status tag */}
           <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center bg-black/60 backdrop-blur-md px-4 py-2.5 rounded-xl border border-white/10">

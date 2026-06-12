@@ -28,7 +28,8 @@ class MediaPipeFaceMesh:
 
         options = FaceLandmarkerOptions(
             base_options=BaseOptions(model_asset_path=model_path),
-            running_mode=VisionRunningMode.IMAGE
+            running_mode=VisionRunningMode.IMAGE,
+            num_faces=4
         )
         self.landmarker = FaceLandmarker.create_from_options(options)
 
@@ -59,6 +60,33 @@ class MediaPipeFaceMesh:
             
         # Return first detected face's landmarks
         return result.face_landmarks[0]
+
+    def extract_multi_landmarks(self, image: np.ndarray):
+        """
+        Process a BGR image and return normalized landmarks for all detected faces.
+        
+        Args:
+            image: BGR numpy array (OpenCV image)
+            
+        Returns:
+            List of normalized landmark coordinates or None if no face is detected.
+        """
+        if image is None or image.size == 0:
+            return None
+        
+        # Convert BGR (OpenCV) -> RGB (MediaPipe)
+        rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        
+        # Convert numpy array to mp.Image
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_image)
+        
+        # Perform inference
+        result = self.landmarker.detect(mp_image)
+        
+        if not result.face_landmarks:
+            return None
+            
+        return result.face_landmarks
 
 # Singleton instance for the service
 _face_mesh_instance = None
