@@ -114,23 +114,35 @@ export default function ResultCard({ result, options }) {
           </div>
         </div>
 
-        {/* IMAGE PREVIEW (If image has heatmap) */}
-        {!isVideo && result.heatmap && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div className="bg-[#0b0f19] rounded-xl p-2 border border-white/5 aspect-video relative group overflow-hidden">
-              {result.previewUrl ? (
-                <img src={result.previewUrl} alt="Original" className="w-full h-full object-contain" />
-              ) : (
-                 <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">Original Preview</div>
-              )}
-            </div>
-            <div className="bg-[#0b0f19] rounded-xl p-2 border border-white/5 aspect-video relative group overflow-hidden flex flex-col items-center justify-center">
-              <img 
-                src={`data:image/jpeg;base64,${result.heatmap}`} 
-                alt="Heatmap" 
-                className="w-full h-full object-contain"
-              />
-            </div>
+        {/* IMAGE PREVIEW (Conditional Heatmap based on verdict) */}
+        {!isVideo && (
+          <div className="mb-6 flex justify-center">
+            {isFake && result.heatmap ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                <div className="bg-[#0b0f19] rounded-xl p-2 border border-white/5 aspect-video relative group overflow-hidden">
+                  {result.previewUrl ? (
+                    <img src={result.previewUrl} alt="Original" className="w-full h-full object-contain" />
+                  ) : (
+                     <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">Original Preview</div>
+                  )}
+                </div>
+                <div className="bg-[#0b0f19] rounded-xl p-2 border border-white/5 aspect-video relative group overflow-hidden flex flex-col items-center justify-center">
+                  <img 
+                    src={`data:image/jpeg;base64,${result.heatmap}`} 
+                    alt="Heatmap" 
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="bg-[#0b0f19] rounded-xl p-2 border border-white/5 aspect-video relative overflow-hidden w-full max-w-[440px]">
+                {result.previewUrl ? (
+                  <img src={result.previewUrl} alt="Original" className="w-full h-full object-contain" />
+                ) : (
+                   <div className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">Original Preview</div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -193,7 +205,7 @@ export default function ResultCard({ result, options }) {
                          </div>
                       )}
 
-                      {frame.heatmap && (
+                      {frame.heatmap && frame.label.toLowerCase() === 'fake' && (
                         <div className="w-full max-w-[200px] aspect-video bg-black rounded overflow-hidden">
                            <img 
                             src={`data:image/jpeg;base64,${frame.heatmap}`} 

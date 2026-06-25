@@ -191,14 +191,14 @@ export const generateImagePDF = async (data) => {
     state.y += 8;
   }
   
-  // 5. Heatmap Visual
-  if (data.heatmap) {
+  // 5. Heatmap Visual (Only for Deepfakes)
+  if (isFake && data.heatmap) {
     checkPageSpace(doc, title, 105, state);
     
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11.5);
     doc.setTextColor(99, 102, 241);
-    doc.text("AI Attention Heatmap (Grad-CAM)", 13, state.y);
+    doc.text("AI Attention Heatmap (Grad-CAM)", 15, state.y);
     doc.setDrawColor(229, 231, 235);
     doc.line(13, state.y + 2, 197, state.y + 2);
     state.y += 8;
@@ -313,10 +313,11 @@ export const generateVideoPDF = (data, options) => {
     state.y += 8;
     
     frames.forEach((frame) => {
+      const isFrameFake = frame.label && frame.label.toLowerCase() === 'fake';
       let textOffset = 18;
       let textWidth = 174;
       
-      if (frame.heatmap) {
+      if (frame.heatmap && isFrameFake) {
         textOffset = 57;
         textWidth = 135;
       }
@@ -337,8 +338,8 @@ export const generateVideoPDF = (data, options) => {
       doc.setFillColor(249, 250, 251); 
       doc.rect(13, state.y, 184, cardHeight - 4, "FD");
       
-      // Draw frame heatmap on the left if present
-      if (frame.heatmap) {
+      // Draw frame heatmap on the left if present (Only for Fake frames)
+      if (frame.heatmap && isFrameFake) {
         const base64Img = `data:image/jpeg;base64,${frame.heatmap}`;
         doc.addImage(base64Img, "JPEG", 17, state.y + 3, 34, 34);
       }
